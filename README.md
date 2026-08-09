@@ -8,7 +8,7 @@ and a unit test suite.
 Concordia University
 **Author:** Ramprasad Giriraj (40298904)
 **Function:** F3 — sinh(x)
-**Version:** 3.0.0 (Semantic Versioning)
+**Version:** 3.1.0 (Semantic Versioning)
 
 ## What it does
 
@@ -58,7 +58,7 @@ Type a real number, press **Compute** (or Enter). **Clear** resets,
 python3 -m unittest -v test_sinh
 ```
 
-20 tests covering: accuracy against reference values, odd symmetry,
+28 tests covering: accuracy against reference values, odd symmetry,
 overflow behaviour, input parsing, and the from-scratch `_absolute`
 helper. Boundary cases are explicit — `sinh(710.4)` must compute,
 `sinh(800)` must raise `SinhOverflowError`.
@@ -105,6 +105,7 @@ Semantic Versioning (`MAJOR.MINOR.PATCH`):
 - `1.0.0` — D1: series core with a textual interface
 - `2.0.0` — D2: from-scratch rebuild, custom exceptions, Tkinter GUI
 - `3.0.0` — D3: PEP-8 conformance, static analysis, unit test suite
+- `3.1.0` — D3: strict input validation (NaN/inf rejected), convergence reporting
 
 ## Design notes
 
