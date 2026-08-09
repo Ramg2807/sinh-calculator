@@ -19,7 +19,7 @@ helpful, user-oriented messages (traceable to persona frustrations).
 
 Author : Ramprasad Giriraj (40298904)
 Course : SOEN 6011, Summer 2026
-Version: 3.0.0
+Version: 3.1.0
 """
 
 import tkinter as tk  # pylint: disable=import-error
@@ -27,7 +27,7 @@ import tkinter as tk  # pylint: disable=import-error
 # Largest finite double; used to detect overflow without the math module.
 _MAX_DOUBLE = 1.7976931348623157e308
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 
 
 # ---------------------------------------------------------------------------
@@ -45,6 +45,16 @@ class SinhInputError(SinhError):
         super().__init__(
             f"'{raw}' is not a real number. Please enter a value like "
             "2, -0.5, or 3.14."
+        )
+
+
+class SinhConvergenceError(SinhError):
+    """Raised when the series fails to converge within max_terms."""
+
+    def __init__(self, x, max_terms):
+        super().__init__(
+            f"Could not compute sinh({x}) to full precision within "
+            f"{max_terms} terms. Please report this input."
         )
 
 
@@ -90,9 +100,15 @@ def sinh(x, tol=1e-16, max_terms=800):
         sign = -1.0
         v = -v
 
+    # sinh(0) = 0 exactly; the series below never converges relatively
+    # for a zero input because every term is zero.
+    if v == 0.0:
+        return 0.0
+
     term = v          # first series term is x itself
     total = term
     n = 1
+    converged = False
     while n < max_terms:
         # Subordinate step: next odd term from the previous one,
         # term_{n} = term_{n-1} * v^2 / ((2n)(2n+1)). The multiply and
@@ -102,9 +118,13 @@ def sinh(x, tol=1e-16, max_terms=800):
         if total > _MAX_DOUBLE:
             raise SinhOverflowError(x)
         if _absolute(term) < tol * _absolute(total):
+            converged = True
             break
         n = n + 1
 
+    if not converged:
+        # Exhausting max_terms is a failure, not a silent result.
+        raise SinhConvergenceError(x, max_terms)
     if total > _MAX_DOUBLE:
         raise SinhOverflowError(x)
     return sign * total
@@ -120,9 +140,17 @@ def parse_real(raw):
     if cleaned == "":
         raise SinhInputError("(empty)")
     try:
-        return float(cleaned)
+        value = float(cleaned)
     except ValueError as exc:
         raise SinhInputError(cleaned) from exc
+    # float() also accepts "nan", "inf", "-infinity". These are not
+    # real numbers in the sense required here, so reject them.
+    # NaN is detected without importing math: NaN != NaN is True.
+    if value != value:  # pylint: disable=comparison-with-itself
+        raise SinhInputError(cleaned)
+    if value > _MAX_DOUBLE or value < -_MAX_DOUBLE:
+        raise SinhInputError(cleaned)
+    return value
 
 
 # ---------------------------------------------------------------------------
