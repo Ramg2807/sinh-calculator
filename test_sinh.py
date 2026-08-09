@@ -89,6 +89,47 @@ class TestInputParsing(unittest.TestCase):
         self.assertTrue(issubclass(s.SinhInputError, s.SinhError))
 
 
+class TestSpecialValueRejection(unittest.TestCase):
+    """NaN and infinity are not accepted as real inputs."""
+
+    def test_nan_rejected(self):
+        with self.assertRaises(s.SinhInputError):
+            s.parse_real("nan")
+
+    def test_nan_mixed_case_rejected(self):
+        with self.assertRaises(s.SinhInputError):
+            s.parse_real("NaN")
+
+    def test_infinity_rejected(self):
+        with self.assertRaises(s.SinhInputError):
+            s.parse_real("inf")
+
+    def test_negative_infinity_rejected(self):
+        with self.assertRaises(s.SinhInputError):
+            s.parse_real("-Infinity")
+
+    def test_overflowing_literal_rejected(self):
+        with self.assertRaises(s.SinhInputError):
+            s.parse_real("1e400")
+
+
+class TestConvergenceReporting(unittest.TestCase):
+    """Exhausting max_terms is reported, not silently returned."""
+
+    def test_insufficient_terms_raises(self):
+        with self.assertRaises(s.SinhConvergenceError):
+            s.sinh(2.0, max_terms=3)
+
+    def test_convergence_error_is_sinherror(self):
+        self.assertTrue(issubclass(s.SinhConvergenceError, s.SinhError))
+
+    def test_normal_call_does_not_raise(self):
+        try:
+            s.sinh(2.0)
+        except s.SinhConvergenceError:
+            self.fail("sinh(2.0) should converge with default max_terms")
+
+
 class TestAbsoluteHelper(unittest.TestCase):
     """The from-scratch _absolute replaces built-in abs()."""
 
